@@ -2,7 +2,7 @@
  * AI suggestion engine.
  *
  * Pure logic, no React: it (1) summarizes the current Excalidraw scene into a
- * compact JSON the model can reason about, (2) asks the model — the local MLX
+ * compact JSON the model can reason about, (2) asks the model — the local llama.cpp
  * sidecar by default, OpenRouter when opted in — for the next 1-3 useful
  * elements, (3) turns those suggestions into Excalidraw element skeletons the
  * canvas can convert + ghost-render, and (4) generates a picture for a label
@@ -942,7 +942,7 @@ export function buildIllustratePrompt(
 
 /**
  * Generate a picture for a label and/or the user's own ink. Cloud only — the
- * local MLX sidecar is a text model.
+ * local llama.cpp sidecar is a text model.
  *
  * Image models live on OpenRouter's images endpoint, which rejects nothing and
  * returns raw base64; the chat endpoint refuses them by name. Three attempts,

@@ -1,26 +1,32 @@
 """
-Render the README hero banner: the Lucida icon + wordmark + tagline on a deep
-brand gradient, with subtle sketch->clean motifs. Reuses the generated icon.
+Render the README hero banner: the Lucida icon + wordmark + tagline + feature
+pills on the brand gradient.
 
-Run: sidecar/.venv/bin/python scratch/make_hero.py   (after make_icon.py)
-Outputs /tmp/lucida-hero.png (1600x520).
+Run: python scratch/make_hero.py   (needs Pillow and numpy; Segoe UI from Windows)
+Writes docs/hero.png (1600x520). Uses the icon from make_icon.py when it has
+been rendered, else src-tauri/icons/icon.png.
 """
+import os
+import tempfile
+from pathlib import Path
+
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+ROOT = Path(__file__).resolve().parent.parent
+FONTS = Path(os.environ.get("WINDIR", r"C:\Windows")) / "Fonts"
 SCALE = 2
 W, H = 1600 * SCALE, 520 * SCALE
 
+TAGLINE = "A whiteboard for Windows: pictures, plans, agents."
+PILLS = ["Pictures from a word", "Board per folder", "Plan wall in Markdown", "MCP"]
+
 
 def load_font(size, bold=False):
-    for path, idx in [
-        ("/System/Library/Fonts/Helvetica.ttc", 1 if bold else 0),
-        ("/System/Library/Fonts/SFNS.ttf", 0),
-        ("/Library/Fonts/Arial.ttf", 0),
-    ]:
+    for name in (["segoeuib.ttf", "arialbd.ttf"] if bold else ["segoeui.ttf", "arial.ttf"]):
         try:
-            return ImageFont.truetype(path, size, index=idx)
-        except Exception:
+            return ImageFont.truetype(str(FONTS / name), size)
+        except OSError:
             continue
     return ImageFont.load_default()
 
@@ -35,43 +41,18 @@ def diagonal_gradient(w, h, c0, c1):
     return Image.fromarray(arr, "RGBA")
 
 
-def four_point_star(cx, cy, r, waist):
-    return [
-        (cx, cy - r), (cx + waist, cy - waist), (cx + r, cy), (cx + waist, cy + waist),
-        (cx, cy + r), (cx - waist, cy + waist), (cx - r, cy), (cx - waist, cy - waist),
-    ]
+def icon_source():
+    rendered = Path(tempfile.gettempdir()) / "lucida-icon.png"
+    return rendered if rendered.exists() else ROOT / "src-tauri" / "icons" / "icon.png"
 
 
 def render():
     img = diagonal_gradient(W, H, (79, 70, 229), (124, 58, 237))  # indigo-600 -> violet-600
 
-    # Soft decorative blobs (very low opacity) for depth.
-    deco = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dd = ImageDraw.Draw(deco)
-    dd.ellipse([W * 0.62, -H * 0.4, W * 1.15, H * 0.7], fill=(255, 255, 255, 14))
-    dd.ellipse([W * 0.78, H * 0.45, W * 1.2, H * 1.3], fill=(255, 255, 255, 10))
-    img = Image.alpha_composite(img, deco.filter(ImageFilter.GaussianBlur(40)))
-
-    d = ImageDraw.Draw(img)
-    white = (255, 255, 255, 255)
-
-    # Subtle "sketch -> clean" motif on the right: a loose gray scribble that
-    # resolves into a crisp circle, with a sparkle.
-    cx, cy = W * 0.80, H * 0.52
-    pts = []
-    for i in range(140):
-        a = (i / 140) * np.pi * 1.9
-        wobble = 1.0 + (0.10 * np.sin(a * 5) if i < 70 else 0.0)
-        r = 150 * SCALE * wobble
-        pts.append((cx + np.cos(a) * r, cy + np.sin(a) * r))
-    d.line(pts[:70], fill=(255, 255, 255, 70), width=5 * SCALE, joint="curve")
-    d.arc([cx - 150 * SCALE, cy - 150 * SCALE, cx + 150 * SCALE, cy + 150 * SCALE],
-          start=15, end=210, fill=(255, 255, 255, 235), width=7 * SCALE)
-    d.polygon(four_point_star(cx + 150 * SCALE, cy - 130 * SCALE, 26 * SCALE, 6 * SCALE), fill=white)
-
-    # Icon (reuse the generated master) with a soft shadow.
-    icon = Image.open("/tmp/lucida-icon.png").convert("RGBA").resize((300 * SCALE, 300 * SCALE), Image.LANCZOS)
-    ix, iy = int(W * 0.055), int(H / 2 - 150 * SCALE)
+    # Icon with a soft shadow.
+    size = 270 * SCALE
+    icon = Image.open(icon_source()).convert("RGBA").resize((size, size), Image.LANCZOS)
+    ix, iy = int(W * 0.064), int(H / 2 - size / 2)
     shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     shadow.paste((0, 0, 0, 90), (ix + 6 * SCALE, iy + 12 * SCALE), icon.split()[3])
     img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(18)))
@@ -79,33 +60,31 @@ def render():
     d = ImageDraw.Draw(img)
 
     # Wordmark + tagline.
-    tx = ix + 300 * SCALE + 56 * SCALE
-    f_title = load_font(132 * SCALE // 1, bold=True)
-    f_tag = load_font(34 * SCALE, bold=False)
-    f_pill = load_font(26 * SCALE, bold=True)
-    d.text((tx, H * 0.27), "Lucida", font=f_title, fill=white)
-    d.text((tx + 4 * SCALE, H * 0.55), "A local-first AI smart whiteboard for the Mac.", font=f_tag, fill=(255, 255, 255, 235))
+    white = (255, 255, 255, 255)
+    tx = ix + size + 80 * SCALE
+    d.text((tx, H * 0.20), "Lucida", font=load_font(132 * SCALE, bold=True), fill=white)
+    d.text((tx + 2 * SCALE, H * 0.53), TAGLINE, font=load_font(32 * SCALE), fill=(255, 255, 255, 240))
 
     # Feature pills, drawn on an alpha-composited overlay so the translucent
-    # fill actually blends (plain ImageDraw on an RGBA image overwrites alpha,
-    # which is why a direct draw would turn into a solid-white blob).
+    # fill actually blends (plain ImageDraw on an RGBA image overwrites alpha).
     pills = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     pd = ImageDraw.Draw(pills)
-    px, py = tx + 4 * SCALE, int(H * 0.70)
-    for label in ["Beautify", "Suggest", "100% on-device"]:
+    f_pill = load_font(23 * SCALE, bold=True)
+    px, py = tx - 4 * SCALE, int(H * 0.70)
+    for label in PILLS:
         bb = pd.textbbox((0, 0), label, font=f_pill)
         tw, th = bb[2] - bb[0], bb[3] - bb[1]
-        pad = 20 * SCALE
-        h_pill = th + 2 * pad
-        pd.rounded_rectangle([px, py, px + tw + 2 * pad, py + h_pill], radius=h_pill // 2,
+        pad_x, pad_y = 20 * SCALE, 17 * SCALE
+        h_pill = th + 2 * pad_y
+        pd.rounded_rectangle([px, py, px + tw + 2 * pad_x, py + h_pill], radius=h_pill // 2,
                              fill=(255, 255, 255, 50))
-        pd.text((px + pad, py + pad - bb[1]), label, font=f_pill, fill=(255, 255, 255, 255))
-        px += tw + 2 * pad + 18 * SCALE
+        pd.text((px + pad_x, py + pad_y - bb[1]), label, font=f_pill, fill=white)
+        px += tw + 2 * pad_x + 16 * SCALE
     img = Image.alpha_composite(img, pills)
 
-    out = img.convert("RGB").resize((1600, 520), Image.LANCZOS)
-    out.save("/tmp/lucida-hero.png")
-    print("wrote /tmp/lucida-hero.png")
+    out = ROOT / "docs" / "hero.png"
+    img.convert("RGB").resize((1600, 520), Image.LANCZOS).save(out)
+    print(f"wrote {out}")
 
 
 if __name__ == "__main__":

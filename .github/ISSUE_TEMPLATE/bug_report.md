@@ -16,11 +16,12 @@ labels: bug
 
 **Environment**
 
-- macOS version:
-- Apple Silicon (required for MLX)? yes / no
+- Windows version (Settings → System → About, e.g. Windows 11 24H2):
 - Lucida version or commit:
-- Model (`LUCIDA_AI_MODEL`, default Qwen2.5-3B-Instruct-4bit):
+- Installed with: setup .exe / .msi / built from source
+- Experiments on? Suggestions (local model) / Listen — GPU (NVIDIA?) or CPU:
+- Model (`LUCIDA_AI_MODEL`, default Qwen/Qwen2.5-3B-Instruct-GGUF):
 
 **Logs**
 
-<!-- sidecar/server.log and any console output -->
+<!-- server.log / listen.log in the folder for local models, and any console output -->

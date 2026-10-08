@@ -103,7 +103,7 @@ check("skeletons: node emitted before arrow", skels.findIndex((s) => s.type === 
 const localCfg: AiConfig = {
   provider: "local",
   baseUrl: "http://127.0.0.1:8765",
-  model: "mlx-community/Qwen2.5-3B-Instruct-4bit",
+  model: "Qwen/Qwen2.5-3B-Instruct-GGUF",
   cloud: { apiKey: "", model: "", fastModel: "", imageModel: "" },
   autoSuggest: false,
 };

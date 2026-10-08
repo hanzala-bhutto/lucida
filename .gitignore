@@ -12,14 +12,13 @@ dist
 dist-ssr
 *.local
 
-# Python sidecar venv (regenerate with `uv venv sidecar/.venv && uv pip install mlx-lm`)
+# Python sidecar venv (regenerate with sidecar\setup.ps1)
 sidecar/.venv
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
@@ -28,3 +27,4 @@ sidecar/.venv
 
 # A board lives in its folder; never publish one
 .lucida/
+__pycache__/

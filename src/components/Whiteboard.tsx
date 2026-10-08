@@ -143,7 +143,7 @@ export interface WhiteboardProps {
   initialBoard?: string | null;
   /** called, debounced, with the board to write back into the folder. */
   onPersist?: (json: string) => void;
-  /** a deliberate (⌘↵ / button) request is running. */
+  /** a deliberate (Ctrl+Enter / button) request is running. */
   onBusyChange?: (busy: boolean) => void;
   /** an auto-suggest request is running — subtle indicator only. */
   onAutoThinkingChange?: (thinking: boolean) => void;
@@ -483,7 +483,7 @@ interface ChipHandle {
 
 /**
  * One button where the eye already is: select a word (or a sketch) and a small
- * "Bild" chip sits right under it. ⌘I does the same. Ref-driven, so showing it
+ * "Bild" chip sits right under it. Ctrl+I does the same. Ref-driven, so showing it
  * never re-renders the canvas.
  */
 const ImageChip = forwardRef<ChipHandle, { onGo: () => void; T: Strings }>(function ImageChip({ onGo, T }, ref) {
@@ -504,7 +504,7 @@ const ImageChip = forwardRef<ChipHandle, { onGo: () => void; T: Strings }>(funct
       title={spot.needsKey ? T.chipNoKeyTitle : T.chipTitle}
     >
       <span aria-hidden="true">✦</span> {spot.needsKey ? T.chipNoKey : spot.kind === "sketch" ? T.chipSketch : T.chip}
-      {!spot.needsKey && <kbd>⌘I</kbd>}
+      {!spot.needsKey && <kbd>Ctrl+I</kbd>}
     </button>
   );
 });
@@ -537,7 +537,7 @@ const AgentFrameOverlay = forwardRef<AgentFrameHandle, { onKeep: () => void; onD
         <div className="lucida-agent-frame__tag" role="dialog" aria-label={`${T.proposal}: ${frame.title}`}>
           <span className="lucida-agent-frame__title">{T.proposal} · {frame.title}</span>
           <button type="button" className="lucida-agent-frame__btn lucida-agent-frame__btn--go" onClick={onKeep}>
-            {T.keep} <kbd>⌘↵</kbd>
+            {T.keep} <kbd>Ctrl+Enter</kbd>
           </button>
           <button type="button" className="lucida-agent-frame__btn" onClick={onDiscard}>
             {T.discard} <kbd>Esc</kbd>
@@ -558,7 +558,7 @@ interface EditHandle {
 /**
  * Click a picture: type what should be different and the model gets the
  * picture itself plus the change, so it edits *this* picture. ↻ draws the same
- * subject fresh. Either way the old picture is one ⌘Z away.
+ * subject fresh. Either way the old picture is one Ctrl+Z away.
  */
 const EditBar = forwardRef<EditHandle, { onSubmit: (instruction: string) => void; onReroll: () => void; T: Strings }>(
   function EditBar({ onSubmit, onReroll, T }, ref) {
@@ -1159,7 +1159,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
     /**
      * Redraw the clicked picture in place — with one change, or as a fresh
      * take on the same subject. Place, size and group are kept; the old
-     * picture is replaced as one undo step, so ⌘Z brings it back.
+     * picture is replaced as one undo step, so Ctrl+Z brings it back.
      */
     const redrawPicture = async (change: { instruction: string } | "reroll") => {
       const api = apiRef.current;
@@ -1180,7 +1180,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
       onBusyChange?.(true);
       chipRef.current?.set(null);
       // the waiting frame is a scene element on top of the old picture, so it
-      // follows scrolling and zoom like any frame ⌘I places
+      // follows scrolling and zoom like any frame Ctrl+I places
       const index = 3000;
       pendingSpots.current.set(index, box);
       const frame = convertToExcalidrawElements(
@@ -1539,7 +1539,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
       // Touching a ghost with the selection tool means "I'll take this one".
       // Not an agent's proposal: a poster fills the view, so the click that
       // focuses the window or starts a drag would take it by accident. That
-      // one is kept only on purpose — ⌘↵, or Keep on its frame.
+      // one is kept only on purpose — Ctrl+Enter, or Keep on its frame.
       if (activeTool.type === "selection") {
         const api = apiRef.current;
         if (!api) return;
@@ -1789,7 +1789,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
       }
     };
 
-    /** The chip and ⌘I: draw what is selected, or say how to get a picture. */
+    /** The chip and Ctrl+I: draw what is selected, or say how to get a picture. */
     const illustrateSelection = async (): Promise<SuggestResult> => {
       const api = apiRef.current;
       if (!api) return { count: 0, error: "canvas not ready" };
@@ -2003,7 +2003,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
       if (slots.length) {
         inFlight.current = true;
         onBusyChange?.(true);
-        const base = 1000; // placeholder indices of their own, clear of ⌘I's
+        const base = 1000; // placeholder indices of their own, clear of Ctrl+I's
         try {
           const frames = convertToExcalidrawElements(
             slots.map(
@@ -2160,7 +2160,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
       };
     };
 
-    /** Keep the agent's proposal — the frame's button; ⌘↵ goes through the App. */
+    /** Keep the agent's proposal — the frame's button; Ctrl+Enter goes through the App. */
     const agentKeep = () => {
       const api = apiRef.current;
       if (!api) return;
@@ -2735,7 +2735,7 @@ const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(
             <MainMenu.DefaultItems.SearchMenu />
             <MainMenu.DefaultItems.ChangeCanvasBackground />
             <MainMenu.Separator />
-            <MainMenu.Item onSelect={() => onOpenSettings?.()} shortcut="⌘,">
+            <MainMenu.Item onSelect={() => onOpenSettings?.()} shortcut="Ctrl+,">
               {T.menuSettings}
             </MainMenu.Item>
             <MainMenu.DefaultItems.ClearCanvas />

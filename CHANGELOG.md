@@ -6,6 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Forked from [Lang-Julian/lucida](https://github.com/Lang-Julian/lucida) v0.2.0
+as a Windows-only app. Entries below this one are the original project's.
+
+### Changed
+
+- **Lucida is now a Windows app** (Windows 10/11 x64); macOS is no longer
+  supported. Settings and the board API token live in `%APPDATA%\Lucida`,
+  managed defaults in `%ProgramData%\Lucida\defaults.json`, the OpenRouter
+  key in Windows Credential Manager (setting value `keyStore: "credentials"`).
+  Shortcuts use Ctrl. Bundles are an NSIS installer (per user) and an MSI.
+- **Local models** run on llama.cpp (`Qwen/Qwen2.5-3B-Instruct-GGUF`) and
+  faster-whisper instead of MLX; `sidecar\setup.ps1` builds the `.venv`, and
+  `serve.ps1` / `listen.ps1` replace the shell scripts.
+- `scripts\lucida.cmd` replaces `scripts/lucida`; the MCP server finds and
+  starts `Lucida.exe` (or `LUCIDA_APP`).
+
+### Fixed
+
+- The board API token is drawn from the OS random generator; it no longer
+  depends on `/dev/urandom`, which does not exist on Windows.
+
 ## [0.2.0] — 2026-10-05
 
 The board loses its side panel and gains a job: pictures from a word, a plan
@@ -105,6 +126,6 @@ Initial public release.
 - GitHub Actions CI (build + sanity tests + Rust fmt/clippy/build), a custom
   icon + favicon, and full documentation.
 
-[Unreleased]: https://github.com/Lang-Julian/lucida/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hanzala-bhutto/lucida/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/Lang-Julian/lucida/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Lang-Julian/lucida/releases/tag/v0.1.0

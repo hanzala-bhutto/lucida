@@ -4,7 +4,7 @@
  * overridable via the LUCIDA_AI_PORT / LUCIDA_AI_MODEL env vars at launch.
  */
 export const DEFAULT_AI_PORT = 8765;
-export const DEFAULT_AI_MODEL = "mlx-community/Qwen2.5-3B-Instruct-4bit";
+export const DEFAULT_AI_MODEL = "Qwen/Qwen2.5-3B-Instruct-GGUF";
 export const DEFAULT_AI_BASE_URL = `http://127.0.0.1:${DEFAULT_AI_PORT}`;
 
 /** Visual treatment for not-yet-accepted AI suggestions ("ghost" elements). */
@@ -83,7 +83,7 @@ export const PRIVACY_ZDR = { data_collection: "deny", zdr: true } as const;
 export const PRIVACY_NO_TRAINING = { data_collection: "deny" } as const;
 /** Sent as OpenRouter's app attribution headers — off by default, see DEFAULT_TRANSPORT. */
 export const APP_ATTRIBUTION = {
-  referer: "https://github.com/Lang-Julian/lucida",
+  referer: "https://github.com/hanzala-bhutto/lucida",
   title: "Lucida",
 };
 

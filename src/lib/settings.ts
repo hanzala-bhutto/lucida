@@ -1,9 +1,9 @@
 /**
  * Settings — one flat object, kept in a file by the Rust side
- * (`~/Library/Application Support/Lucida/settings.json`), never in the
- * webview. An administrator can ship `/Library/Application Support/Lucida/
- * defaults.json` with `{ "defaults": {…}, "locked": ["key", …] }`: defaults
- * fill what the user has not chosen, locked keys are fixed for everyone.
+ * (`%APPDATA%\Lucida\settings.json`), never in the webview. An
+ * administrator can ship `%ProgramData%\Lucida\defaults.json` with
+ * `{ "defaults": {…}, "locked": ["key", …] }`: defaults fill what the user
+ * has not chosen, locked keys are fixed for everyone.
  *
  * Nothing about an organisation is built in: name, colour and logo are empty
  * until someone sets them.
@@ -36,14 +36,14 @@ export interface Prefs {
   zdr: boolean;
 
   /** where the OpenRouter key lives */
-  keyStore: "keychain" | "file";
+  keyStore: "credentials" | "file";
   keyFile: string;
 
   suggest: boolean;
   predictStrokes: boolean;
   listen: boolean;
   audioInput: string;
-  /** folder holding serve.sh / listen.sh and their .venv; "" = the default */
+  /** folder holding serve.ps1 / listen.ps1 and their .venv; "" = the default */
   sidecarDir: string;
 }
 
@@ -64,7 +64,7 @@ export const DEFAULT_PREFS: Prefs = {
   textModel: DEFAULT_CLOUD_MODEL,
   fastModel: DEFAULT_CLOUD_FAST_MODEL,
   zdr: true,
-  keyStore: "keychain",
+  keyStore: "credentials",
   keyFile: "",
   suggest: false,
   predictStrokes: false,
@@ -95,7 +95,7 @@ export function sanitize(raw: unknown): Partial<Prefs> {
   };
   if (r.language === "system" || r.language === "de" || r.language === "en") out.language = r.language;
   if (r.theme === "system" || r.theme === "light" || r.theme === "dark") out.theme = r.theme;
-  if (r.keyStore === "keychain" || r.keyStore === "file") out.keyStore = r.keyStore;
+  if (r.keyStore === "credentials" || r.keyStore === "file") out.keyStore = r.keyStore;
   // older versions called the house style "aiz"
   const style = r.style === "aiz" ? "house" : r.style;
   if (STYLES.includes(style as IllustrationStyle)) out.style = style as IllustrationStyle;

@@ -92,14 +92,14 @@ function App() {
       // A key from an older version — the webview's storage, or the shared
       // key file — moves into the chosen store once. The file is not touched.
       let found = s.legacyKey;
-      if (!key && !found && s.prefs.keyStore === "keychain") {
+      if (!key && !found && s.prefs.keyStore === "credentials") {
         found = (await invoke<string | null>("secret_get", { name: KEY_NAME, storage: "file", file: null }).catch(() => null)) ?? "";
       }
       if (!key && found) {
         try {
           await invoke("secret_set", { name: KEY_NAME, value: found, ...where });
           key = found;
-          if (s.prefs.keyStore === "keychain") setToast(t.keyMoved);
+          if (s.prefs.keyStore === "credentials") setToast(t.keyMoved);
         } catch (err) {
           setToast(t.keyMoveFailed(String(err)));
           key = found;
@@ -467,11 +467,11 @@ function App() {
     return () => window.clearTimeout(id);
   }, [toast]);
 
-  // ⌘↵ keep · Esc drop · ⌘I picture · ⌘, settings · ⌘L listen (experiment)
+  // Ctrl+Enter keep · Esc drop · Ctrl+I picture · Ctrl+, settings · Ctrl+L listen (experiment)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (settingsOpen) return;
-      const mod = e.metaKey || e.ctrlKey;
+      const mod = e.ctrlKey;
       if (mod && e.key === ",") {
         e.preventDefault();
         setSettingsOpen(true);

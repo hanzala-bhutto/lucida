@@ -8,7 +8,7 @@
  * and speak HTTP is another.
  *
  * Every method that adds something adds a *proposal*: the user keeps it with
- * ⌘↵ or drops it with Esc. An agent proposes to the board; it never changes it.
+ * Ctrl+Enter or drops it with Esc. An agent proposes to the board; it never changes it.
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";

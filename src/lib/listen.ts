@@ -9,7 +9,7 @@ import { DEFAULT_LISTEN_BASE_URL, SPOKEN_MAX_CHARS, SPOKEN_WINDOW_S } from "./co
 import type { AudioInput, ListenHealth, ListenSnapshot, TranscriptSegment } from "./types";
 
 /**
- * Which inputs this Mac offers. A call's audio shows up here as its own
+ * Which inputs this PC offers. A call's audio shows up here as its own
  * device — Teams installs one, and a loopback driver provides one for anything
  * else — so listening to a meeting is a matter of picking the right entry.
  */
