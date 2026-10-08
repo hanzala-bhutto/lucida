@@ -4,5 +4,43 @@
     "commit": "",
     "pr": "",
     "sessionUrl": false
+  },
+  "permissions": {
+    "deny": [
+      "Bash(gh pr merge *--delete-branch*)",
+      "Bash(gh pr merge * -d)",
+      "Bash(gh pr merge * -d *)",
+      "Bash(git push --delete *)",
+      "Bash(git push * --delete *)",
+      "Bash(git push * -d *)",
+      "Bash(gh api *refs/heads*-X DELETE*)",
+      "Bash(gh api *-X DELETE*refs/heads*)",
+      "Bash(gh api *--method DELETE*refs/heads*)",
+      "Bash(gh api *refs/heads*--method DELETE*)",
+      "PowerShell(gh pr merge *--delete-branch*)",
+      "PowerShell(gh pr merge * -d)",
+      "PowerShell(gh pr merge * -d *)",
+      "PowerShell(git push --delete *)",
+      "PowerShell(git push * --delete *)",
+      "PowerShell(git push * -d *)",
+      "PowerShell(gh api *refs/heads*-X DELETE*)",
+      "PowerShell(gh api *-X DELETE*refs/heads*)",
+      "PowerShell(gh api *--method DELETE*refs/heads*)",
+      "PowerShell(gh api *refs/heads*--method DELETE*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-remote-branch-delete.mjs\"",
+            "statusMessage": "Checking for remote branch deletion"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -37,6 +37,9 @@ Follow the workflow below for every task, however small:
    section filled in, `Closes #<issue>`, and the issue's labels.
 6. Get CI green; merge (squash) only when the maintainer asks.
 
+**Never delete remote branches**, merged or not: no `--delete-branch` on
+`gh pr merge`, no `git push --delete`, no `git push origin :<branch>`.
+
 Commits, PRs, issues and release notes carry **no AI attribution**: no
 `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line, no
 mention of an assistant. `.claude/settings.json` turns the automatic lines off.
