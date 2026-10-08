@@ -17,9 +17,9 @@ concurrency:
 jobs:
   web:
     name: Web (build + sanity tests)
-    # Apple Silicon: keeps the toolchain consistent with the MLX-adjacent dev setup.
-    # CI never downloads models or runs MLX — only the build and the pure-logic tests.
-    runs-on: macos-latest
+    # CI never downloads models or runs the sidecars — only the build and the
+    # pure-logic tests.
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -41,7 +41,7 @@ jobs:
 
   rust:
     name: Rust (fmt + clippy + build)
-    runs-on: macos-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5

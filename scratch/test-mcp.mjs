@@ -18,7 +18,7 @@ function check(name, cond, extra = "") {
 
 // Point the server at an app that does not exist, so the call cannot launch one.
 const child = spawn(process.execPath, [join(here, "../mcp/server.mjs")], {
-  env: { ...process.env, LUCIDA_APP: "/nonexistent/Lucida.app", HOME: join(here, ".mcp-test-home") },
+  env: { ...process.env, LUCIDA_APP: "C:\\nonexistent\\Lucida.exe", APPDATA: join(here, ".mcp-test-home") },
   stdio: ["pipe", "pipe", "inherit"],
 });
 const waiting = new Map();

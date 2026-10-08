@@ -7,20 +7,30 @@
  *
  * Dependency-free on purpose: stdio JSON-RPC, one file, Node 18+. It holds no
  * board state and no API keys — it forwards each tool call to the running app's
- * board API (127.0.0.1:8767, token in ~/Library/Application Support/Lucida/
- * board-api.json), and the app generates pictures with its own OpenRouter key.
+ * board API (127.0.0.1:8767, token in %APPDATA%\Lucida\board-api.json), and
+ * the app generates pictures with its own OpenRouter key.
  *
- * Everything an agent adds arrives as a proposal the user keeps with ⌘↵ or
- * drops with Esc.
+ * Everything an agent adds arrives as a proposal the user keeps with Ctrl+Enter
+ * or drops with Esc.
  */
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
 
-const TOKEN_FILE = join(homedir(), "Library/Application Support/Lucida/board-api.json");
-const APP = process.env.LUCIDA_APP ?? "/Applications/Lucida.app";
+const APPDATA = process.env.APPDATA ?? join(homedir(), "AppData", "Roaming");
+const LOCALAPPDATA = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
+const TOKEN_FILE = join(APPDATA, "Lucida", "board-api.json");
+/** Lucida.exe: LUCIDA_APP, else the per-user install, the per-machine install, or a local release build. */
+const APP_CANDIDATES = process.env.LUCIDA_APP
+  ? [process.env.LUCIDA_APP]
+  : [
+      join(LOCALAPPDATA, "Lucida", "Lucida.exe"),
+      join(process.env.ProgramFiles ?? "C:\\Program Files", "Lucida", "Lucida.exe"),
+      resolve(dirname(fileURLToPath(import.meta.url)), "..", "src-tauri", "target", "release", "lucida.exe"),
+    ];
 const SERVER = { name: "lucida", version: "0.2.0" };
 
 /* ───────────────────────────  Tools  ─────────────────────────── */
@@ -51,7 +61,7 @@ const TOOLS = [
       "Turn a plan the user has explained into one finished infographic poster on the Lucida board, in the " +
       "organisation's house style set in Lucida (name, accent colour and logo from its settings; neutral without), " +
       "with a generated picture per phase. Phases become a numbered timeline (flow 'sequence') or side-by-side " +
-      "pillars ('parallel'). It arrives as a proposal; the user keeps it with ⌘↵. Pictures take ~20-40 s in total.\n\n" +
+      "pillars ('parallel'). It arrives as a proposal; the user keeps it with Ctrl+Enter. Pictures take ~20-40 s in total.\n\n" +
       "Writing the content: short headlines (≤ 8 words for phase titles, ≤ 13 for the title), concrete numbers " +
       "instead of adjectives, no buzzwords, points of ≤ 10 words. Use the user's language and set `lang` to match. " +
       "Only state numbers and facts the user gave you or " +
@@ -237,10 +247,14 @@ async function healthy(port) {
 async function connection(folder) {
   const t = readToken();
   if (t && (await healthy(t.port))) return t;
-  if (!existsSync(APP)) {
-    throw new Error(`Lucida is not running, and ${APP} does not exist. Build it with \`npm run tauri build\`.`);
+  const app = APP_CANDIDATES.find((p) => existsSync(p));
+  if (!app) {
+    throw new Error(
+      `Lucida is not running, and Lucida.exe was not found (looked in ${APP_CANDIDATES.join(", ")}). ` +
+        "Install it, build it with `npm run tauri build`, or set LUCIDA_APP.",
+    );
   }
-  spawn("open", ["-a", APP, "--args", folder ?? process.cwd()], { stdio: "ignore", detached: true }).unref();
+  spawn(app, [folder ?? process.cwd()], { stdio: "ignore", detached: true }).unref();
   const started = Date.now();
   while (Date.now() - started < 30_000) {
     await new Promise((r) => setTimeout(r, 500));
@@ -315,7 +329,7 @@ async function runTool(name, args = {}) {
           ? `Pictures: ${r.images.placed} drawn, ${r.images.failed} failed${r.images.errors?.length ? ` (${r.images.errors.join("; ")})` : ""}.`
           : null,
         r.notes?.length ? `Notes: ${r.notes.join("; ")}.` : null,
-        "The user keeps it with ⌘↵ or drops it with Esc. Call export_png to look at it before calling it done.",
+        "The user keeps it with Ctrl+Enter or drops it with Esc. Call export_png to look at it before calling it done.",
       ].filter(Boolean);
       return [text(lines.join("\n"))];
     }
@@ -399,7 +413,7 @@ async function onMessage(msg) {
             serverInfo: SERVER,
             instructions:
               "Lucida is the user's local whiteboard. To turn an explained plan into a visual, call render_masterplan, " +
-              "then export_png and look at the result. Everything you add is a proposal the user keeps with ⌘↵.",
+              "then export_png and look at the result. Everything you add is a proposal the user keeps with Ctrl+Enter.",
           },
         });
       case "ping":

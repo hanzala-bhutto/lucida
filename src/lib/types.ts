@@ -166,7 +166,7 @@ export interface Suggestion {
 export type AiProvider = "local" | "openrouter";
 
 /**
- * "full" is the deliberate ⌘↵ request (frontier model, richest prompt);
+ * "full" is the deliberate Ctrl+Enter request (frontier model, richest prompt);
  * "fast" is the auto-suggest after each stroke (cheap model, tight prompt).
  */
 export type SuggestTier = "fast" | "full";
@@ -261,7 +261,7 @@ export interface AiConfig {
   provider: AiProvider;
   /** local sidecar, e.g. "http://127.0.0.1:8765" */
   baseUrl: string;
-  /** mlx model id, e.g. "mlx-community/Qwen2.5-3B-Instruct-4bit" */
+  /** model id the local server answers to, e.g. "Qwen/Qwen2.5-3B-Instruct-GGUF" */
   model: string;
   cloud: CloudConfig;
   /** propose ghosts automatically after every stroke (fast tier). */

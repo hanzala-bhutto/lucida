@@ -869,7 +869,7 @@ body {
   animation: lucida-breathe 1.6s ease-in-out infinite;
 }
 
-/* Settings — a sheet over the canvas, opened with ⌘, */
+/* Settings — a sheet over the canvas, opened with Ctrl+, */
 .settings-backdrop {
   position: fixed;
   inset: 0;

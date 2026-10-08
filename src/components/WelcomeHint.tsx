@@ -31,9 +31,9 @@ function WelcomeHint({ visible, lang }: WelcomeHintProps) {
     >
       <p className="welcome-hint__lead">{T.hint}</p>
       <div className="welcome-hint__legend">
-        <Key combo="⌘I" label={T.hintPicture} />
-        <Key combo="⌘Z" label={T.hintUndo} />
-        <Key combo="⌘," label={T.hintSettings} />
+        <Key combo="Ctrl+I" label={T.hintPicture} />
+        <Key combo="Ctrl+Z" label={T.hintUndo} />
+        <Key combo="Ctrl+," label={T.hintSettings} />
       </div>
     </div>
   );

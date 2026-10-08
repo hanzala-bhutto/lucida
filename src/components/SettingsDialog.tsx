@@ -1,5 +1,5 @@
 /**
- * Settings (⌘,) — everything that is not drawing. Values an administrator
+ * Settings (Ctrl+,) — everything that is not drawing. Values an administrator
  * locked (defaults.json) are shown, not editable.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -178,7 +178,7 @@ export default function SettingsDialog(p: Props) {
       { k },
     );
 
-  const home = (path: string) => path.replace(/^\/Users\/[^/]+/, "~");
+  const home = (path: string) => path.replace(/^[A-Za-z]:\\Users\\[^\\]+/, "~");
 
   return (
     <div className="settings-backdrop" onPointerDown={(e) => e.target === e.currentTarget && p.onClose()}>
@@ -267,7 +267,7 @@ export default function SettingsDialog(p: Props) {
           {field(
             S.keyStore,
             <>
-              {chips("keyStore", p.prefs.keyStore, [["keychain", S.keychain], ["file", S.keyFile]])}
+              {chips("keyStore", p.prefs.keyStore, [["credentials", S.credentials], ["file", S.keyFile]])}
               {p.prefs.keyStore === "file" && (
                 <input type="text" value={p.prefs.keyFile} placeholder={S.keyFilePh} disabled={locked("keyFile")} onChange={(e) => p.onPrefs({ keyFile: e.currentTarget.value })} />
               )}
@@ -325,7 +325,7 @@ export default function SettingsDialog(p: Props) {
             field(
               S.sidecar,
               <div className="settings__row">
-                <code className="settings__path">{p.prefs.sidecarDir ? home(p.prefs.sidecarDir) : "~/Library/Application Support/Lucida/sidecar"}</code>
+                <code className="settings__path">{p.prefs.sidecarDir ? home(p.prefs.sidecarDir) : "%LOCALAPPDATA%\\Lucida\\sidecar"}</code>
                 <button type="button" className="settings__btn" onClick={p.onPickSidecar}>
                   {S.change}
                 </button>

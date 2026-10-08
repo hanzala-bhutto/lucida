@@ -7,8 +7,8 @@
 //! board from the one on screen.
 //!
 //! Two locks on the door, because "localhost" is not "only me":
-//!  - a bearer token, written to `~/Library/Application Support/Lucida/
-//!    board-api.json` with mode 0600, that only this user can read;
+//!  - a bearer token, new on every launch, written to
+//!    `%APPDATA%\Lucida\board-api.json`, which only this user can read;
 //!  - any request carrying an `Origin` header is refused, so a web page in a
 //!    browser cannot drive the board even if it guessed the port.
 
@@ -244,19 +244,18 @@ fn err_body(msg: &str) -> String {
     serde_json::json!({ "ok": false, "error": msg }).to_string()
 }
 
+/// 24 bytes from the OS's CSPRNG (BCryptGenRandom). There is no weaker
+/// fallback: without randomness the API must not start.
 fn random_token() -> String {
     let mut buf = [0u8; 24];
-    if let Ok(mut f) = fs::File::open("/dev/urandom") {
-        let _ = f.read_exact(&mut buf);
-    }
+    getrandom::fill(&mut buf).expect("no OS randomness for the board API token");
     buf.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// `~/Library/Application Support/Lucida/board-api.json` — where the MCP server
-/// finds the port and the token.
+/// `%APPDATA%\Lucida\board-api.json` — where the MCP server finds the port
+/// and the token.
 pub fn token_file() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_default())
-        .join("Library/Application Support/Lucida/board-api.json")
+    crate::support_dir().join("board-api.json")
 }
 
 fn write_token_file(port: u16, token: &str) -> std::io::Result<()> {
@@ -265,19 +264,7 @@ fn write_token_file(port: u16, token: &str) -> std::io::Result<()> {
         fs::create_dir_all(dir)?;
     }
     let body = serde_json::json!({ "port": port, "token": token, "pid": std::process::id() });
-    // Created 0600 from the first byte, and tightened again in case an older
-    // file with looser permissions is being overwritten.
-    let mut opts = fs::OpenOptions::new();
-    opts.write(true).create(true).truncate(true);
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
-        opts.mode(0o600);
-        let mut f = opts.open(&path)?;
-        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))?;
-        f.write_all(body.to_string().as_bytes())?;
-    }
-    #[cfg(not(unix))]
-    opts.open(&path)?.write_all(body.to_string().as_bytes())?;
-    Ok(())
+    // %APPDATA% inherits the profile's ACL: only this user (and admins) can
+    // read the token.
+    fs::write(&path, body.to_string())
 }

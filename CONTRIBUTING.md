@@ -5,22 +5,23 @@ contributions that keep it fast, private, and easy to run are very welcome.
 
 ## Set up
 
-You'll need macOS on Apple Silicon, Node 20+, Rust (via `rustup`), Xcode
-Command Line Tools, and [`uv`](https://github.com/astral-sh/uv).
+You'll need Windows 10/11 x64, Node 20+, Rust (via `rustup`, MSVC toolchain),
+the Visual Studio Build Tools with the **Desktop development with C++**
+workload, and — for the local-model experiments only — Python 3.12 or
+[`uv`](https://github.com/astral-sh/uv).
 
-```bash
+```powershell
 # Frontend deps
 npm install
 
-# Python sidecar (MLX) — creates sidecar/.venv and installs mlx-lm
-uv venv --python 3.12 sidecar/.venv
-uv pip install --python sidecar/.venv/bin/python mlx-lm
+# Python sidecar (llama.cpp + faster-whisper) — creates sidecar\.venv
+powershell -ExecutionPolicy Bypass -File sidecar\setup.ps1
 ```
 
 ## Run the app
 
-```bash
-npm run tauri dev      # hot-reload + auto-spawns the local model server
+```powershell
+npm run tauri dev      # hot-reload
 ```
 
 Beautify works immediately. "Suggest next" lights up once the model has loaded
@@ -30,7 +31,7 @@ Beautify works immediately. "Suggest next" lights up once the model has loaded
 
 The `scratch/` tests are standalone — they are not part of the build:
 
-```bash
+```powershell
 npx tsx scratch/test-recognizer.ts   # synthetic strokes → expected shapes
 npx tsx scratch/test-ai.ts           # model-output parsing + skeleton building
 ```

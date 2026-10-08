@@ -1,9 +1,10 @@
 """
 Lucida Listen — on-device speech context for the whiteboard.
 
-Captures the microphone, transcribes with Whisper on Apple silicon (mlx) and
-keeps a rolling transcript that the app polls. Nothing here talks to the
-network; the model is fetched once from Hugging Face on first use.
+Captures the microphone, transcribes with Whisper (faster-whisper: CUDA when an
+NVIDIA GPU is usable, else the CPU) and keeps a rolling transcript that the app
+polls. Nothing here talks to the network; the model is fetched once from
+Hugging Face on first use.
 
     GET  /health      {"ok": true, "model": "...", "ready": bool, "listening": bool}
     POST /start       start capturing
@@ -27,13 +28,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import numpy as np
 
 PORT = int(os.environ.get("LUCIDA_LISTEN_PORT", "8766"))
-# Which input to listen to. Empty means the system default (the built-in mic).
-# Set it to a loopback device such as BlackHole to hear a Teams or Meet call
-# instead of the room — see docs/ROADMAP.md, "Live meeting mode".
+# Which input to listen to. Empty means the system default microphone.
+# Set it to a loopback device such as "Stereo Mix" or VB-CABLE to hear a Teams
+# or Meet call instead of the room.
 DEVICE = os.environ.get("LUCIDA_LISTEN_DEVICE", "").strip()
 # The chosen input can also be switched at runtime by POST /start {"device": …}.
 CHOSEN = {"device": DEVICE}
-MODEL = os.environ.get("LUCIDA_LISTEN_MODEL", "mlx-community/whisper-large-v3-turbo")
+MODEL = os.environ.get("LUCIDA_LISTEN_MODEL", "large-v3-turbo")
+# "auto" uses CUDA when it works and falls back to the CPU; "cpu" or "cuda" pins it.
+COMPUTE = os.environ.get("LUCIDA_LISTEN_COMPUTE", "auto")
 SAMPLE_RATE = 16_000
 BLOCK_S = 0.5           # capture granularity
 MIN_CHUNK_S = 2.0       # never transcribe less speech than this
@@ -57,6 +60,7 @@ class Listener:
         self.ready = False
         self.error: str | None = None
         self._stream = None
+        self._model = None
         self._blocks: list[np.ndarray] = []
         self._silent_blocks = 0
         self._voiced = False
@@ -65,19 +69,26 @@ class Listener:
 
     # ---- model -----------------------------------------------------------
     def _warm(self) -> None:
-        try:
-            import mlx_whisper  # noqa: F401  (import + first call downloads/compiles)
-            mlx_whisper.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32), path_or_hf_repo=MODEL, fp16=True)
-            self.ready = True
-            print(f"[listen] model ready: {MODEL}", flush=True)
-        except Exception as e:  # pragma: no cover
-            self.error = str(e)
-            print(f"[listen] model failed: {e}", flush=True)
+        # A GPU without its CUDA libraries only fails on first use, so each
+        # device is tried with a real (silent) transcription.
+        devices = ["cuda", "cpu"] if COMPUTE == "auto" else [COMPUTE]
+        for device in devices:
+            try:
+                from faster_whisper import WhisperModel  # import + first load downloads the model
+                self._model = WhisperModel(MODEL, device=device, compute_type="auto")
+                self._transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32))
+                self.ready = True
+                self.error = None
+                print(f"[listen] model ready: {MODEL} on {device}", flush=True)
+                return
+            except Exception as e:  # pragma: no cover
+                self._model = None
+                self.error = str(e)
+                print(f"[listen] model failed on {device}: {e}", flush=True)
 
     def _transcribe(self, audio: np.ndarray) -> str:
-        import mlx_whisper
-        out = mlx_whisper.transcribe(audio, path_or_hf_repo=MODEL, fp16=True, condition_on_previous_text=False)
-        text = (out.get("text") or "").strip()
+        segments, _info = self._model.transcribe(audio, condition_on_previous_text=False)
+        text = "".join(s.text for s in segments).strip()
         low = text.lower()
         if not text or any(p in low for p in PHANTOMS):
             return ""

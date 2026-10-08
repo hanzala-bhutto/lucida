@@ -5,7 +5,7 @@
 Lucida is local-first by design:
 
 - It runs **entirely on-device**. There is no backend and no account system.
-- The MLX model server binds to **`127.0.0.1` only** — it is never exposed on
+- The local model servers bind to **`127.0.0.1` only** — it is never exposed on
   the network.
 - There is **no telemetry** and no analytics.
 - Your diagrams and prompts **never leave the machine**.

@@ -1,5 +1,6 @@
 use std::fs::{self, OpenOptions};
 use std::net::{SocketAddr, TcpStream};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::sync::Mutex;
@@ -10,7 +11,7 @@ mod board_api;
 use board_api::BoardApi;
 use std::sync::Arc;
 
-/// TCP port for the local MLX server. LUCIDA_AI_PORT overrides the default.
+/// TCP port for the local model server. LUCIDA_AI_PORT overrides the default.
 fn port() -> u16 {
     std::env::var("LUCIDA_AI_PORT")
         .ok()
@@ -18,10 +19,10 @@ fn port() -> u16 {
         .unwrap_or(8765)
 }
 
-/// Model id served by mlx_lm.server. LUCIDA_AI_MODEL overrides the default.
+/// Hugging Face repo of the GGUF model served by llama_cpp.server.
+/// LUCIDA_AI_MODEL overrides the default.
 fn model() -> String {
-    std::env::var("LUCIDA_AI_MODEL")
-        .unwrap_or_else(|_| "mlx-community/Qwen2.5-3B-Instruct-4bit".to_string())
+    std::env::var("LUCIDA_AI_MODEL").unwrap_or_else(|_| "Qwen/Qwen2.5-3B-Instruct-GGUF".to_string())
 }
 
 /// TCP port for the local speech server. LUCIDA_LISTEN_PORT overrides the default.
@@ -32,25 +33,46 @@ fn listen_port() -> u16 {
         .unwrap_or(8766)
 }
 
-/// Whisper model served by listen.py. LUCIDA_LISTEN_MODEL overrides the default.
+/// faster-whisper model served by listen.py. LUCIDA_LISTEN_MODEL overrides the default.
 fn listen_model() -> String {
-    std::env::var("LUCIDA_LISTEN_MODEL")
-        .unwrap_or_else(|_| "mlx-community/whisper-large-v3-turbo".to_string())
+    std::env::var("LUCIDA_LISTEN_MODEL").unwrap_or_else(|_| "large-v3-turbo".to_string())
 }
 
-/// `~/Library/Application Support/Lucida` — settings, token, the sidecar.
-fn support_dir() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_default())
-        .join("Library/Application Support/Lucida")
+/// The user's profile folder, `C:\Users\<name>`.
+fn home_dir() -> PathBuf {
+    std::env::var_os("USERPROFILE")
+        .map(PathBuf::from)
+        .unwrap_or_default()
 }
 
-/// Where serve.sh, listen.sh and their .venv live, unless the settings (or
-/// LUCIDA_AI_DIR) name another folder. Only the experiments need it.
+/// A folder from an environment variable, or a path under the profile when
+/// it is unset (on a normal Windows login it always is set).
+fn env_dir(var: &str, fallback: &str) -> PathBuf {
+    std::env::var_os(var)
+        .map(PathBuf::from)
+        .unwrap_or_else(|| home_dir().join(fallback))
+}
+
+/// `%APPDATA%\Lucida` — settings and the board API token.
+pub(crate) fn support_dir() -> PathBuf {
+    env_dir("APPDATA", "AppData\\Roaming").join("Lucida")
+}
+
+/// Where serve.ps1, listen.ps1 and their .venv live, unless the settings (or
+/// LUCIDA_AI_DIR) name another folder. Only the experiments need it. Local,
+/// not roaming: the .venv and the models are gigabytes.
 fn default_sidecar_dir() -> PathBuf {
     std::env::var("LUCIDA_AI_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| support_dir().join("sidecar"))
+        .unwrap_or_else(|_| {
+            env_dir("LOCALAPPDATA", "AppData\\Local")
+                .join("Lucida")
+                .join("sidecar")
+        })
 }
+
+/// Start a process without flashing a console window.
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// Whether something is already listening on the local server port — e.g. a
 /// server left behind by a `tauri dev` hot-reload, or one started by hand.
@@ -60,7 +82,7 @@ fn port_in_use(port: u16) -> bool {
 }
 
 /// Owns one local server child process and its config. Two live in the app:
-/// the MLX text model (`AiSidecar`) and the Whisper speech server
+/// the llama.cpp text model (`AiSidecar`) and the Whisper speech server
 /// (`ListenSidecar`); both are the same shape.
 struct Sidecar {
     child: Mutex<Option<Child>>,
@@ -113,22 +135,36 @@ impl Sidecar {
             .open(dir.join(self.log))
             .map_err(|e| e.to_string())?;
         let err = out.try_clone().map_err(|e| e.to_string())?;
-        let ch = Command::new("bash")
+        let ch = Command::new("powershell.exe")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+            ])
             .arg(&script)
             .env(self.env_port, self.port.to_string())
             .env(self.env_model, &self.model)
             .stdout(out)
             .stderr(err)
+            .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| e.to_string())?;
         *child = Some(ch);
         Ok(())
     }
 
-    /// Kill the server child and reap it. Best-effort.
+    /// Kill the server child — the PowerShell script and the Python server it
+    /// started — and reap it. Best-effort.
     fn stop(&self) {
         if let Ok(mut g) = self.child.lock() {
             if let Some(mut c) = g.take() {
+                // Killing the script alone would orphan Python; /T takes the tree.
+                let _ = Command::new("taskkill")
+                    .args(["/PID", &c.id().to_string(), "/T", "/F"])
+                    .creation_flags(CREATE_NO_WINDOW)
+                    .output();
                 let _ = c.kill();
                 let _ = c.wait();
             }
@@ -481,8 +517,9 @@ fn plan_write(root: String, slug: String, text: String) -> Result<(), String> {
 
 /// Only these may be read or written from the webview.
 const SECRET_NAMES: [&str; 1] = ["OPENROUTER_API_KEY"];
-/// The Keychain service Lucida's items are filed under.
-const KEYCHAIN_SERVICE: &str = "Lucida";
+/// The Windows Credential Manager service Lucida's items are filed under
+/// (listed there as `<name>.Lucida`).
+const CREDENTIAL_SERVICE: &str = "Lucida";
 
 fn secret_allowed(name: &str) -> Result<(), String> {
     if SECRET_NAMES.contains(&name) {
@@ -492,12 +529,16 @@ fn secret_allowed(name: &str) -> Result<(), String> {
     }
 }
 
-/// A key file: `NAME=value` lines, mode 0600. `~/.env.secrets` unless the
-/// settings name another.
+/// A key file: `NAME=value` lines in the user's profile, which only they can
+/// read. `%USERPROFILE%\.env.secrets` unless the settings name another; a
+/// leading `~` stands for the profile.
 fn secrets_file(path: Option<&str>) -> PathBuf {
     match path.map(str::trim).filter(|p| !p.is_empty()) {
-        Some(p) => PathBuf::from(p.replacen('~', &std::env::var("HOME").unwrap_or_default(), 1)),
-        None => PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".env.secrets"),
+        Some(p) => match p.strip_prefix('~') {
+            Some(rest) => home_dir().join(rest.trim_start_matches(['/', '\\'])),
+            None => PathBuf::from(p),
+        },
+        None => home_dir().join(".env.secrets"),
     }
 }
 
@@ -533,58 +574,42 @@ fn file_set(path: &PathBuf, name: &str, value: &str) -> Result<(), String> {
     write_private(path, &text)
 }
 
-/// Write a file only this user can read, atomically.
+/// Write a file atomically. The files this writes live in the user's profile
+/// (`%APPDATA%`, `%USERPROFILE%`), whose ACL already keeps other users out.
 fn write_private(path: &PathBuf, text: &str) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     }
     let tmp = path.with_extension("lucida-tmp");
-    {
-        let mut opts = fs::OpenOptions::new();
-        opts.write(true).create(true).truncate(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            opts.mode(0o600);
-        }
-        use std::io::Write;
-        opts.open(&tmp)
-            .and_then(|mut f| f.write_all(text.as_bytes()))
-            .map_err(|e| e.to_string())?;
-    }
+    fs::write(&tmp, text).map_err(|e| e.to_string())?;
     fs::rename(&tmp, path).map_err(|e| e.to_string())
 }
 
-#[cfg(target_os = "macos")]
-fn keychain_get(name: &str) -> Option<String> {
-    security_framework::passwords::get_generic_password(KEYCHAIN_SERVICE, name)
+fn credential(name: &str) -> Result<keyring::Entry, String> {
+    keyring::Entry::new(CREDENTIAL_SERVICE, name).map_err(|e| e.to_string())
+}
+
+fn credential_get(name: &str) -> Option<String> {
+    credential(name)
+        .ok()?
+        .get_password()
         .ok()
-        .and_then(|b| String::from_utf8(b).ok())
         .filter(|v| !v.is_empty())
 }
 
-#[cfg(target_os = "macos")]
-fn keychain_set(name: &str, value: &str) -> Result<(), String> {
+fn credential_set(name: &str, value: &str) -> Result<(), String> {
+    let entry = credential(name)?;
     if value.is_empty() {
-        let _ = security_framework::passwords::delete_generic_password(KEYCHAIN_SERVICE, name);
-        return Ok(());
+        return match entry.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        };
     }
-    security_framework::passwords::set_generic_password(KEYCHAIN_SERVICE, name, value.as_bytes())
-        .map_err(|e| e.to_string())
+    entry.set_password(value).map_err(|e| e.to_string())
 }
 
-#[cfg(not(target_os = "macos"))]
-fn keychain_get(_name: &str) -> Option<String> {
-    None
-}
-
-#[cfg(not(target_os = "macos"))]
-fn keychain_set(_name: &str, _value: &str) -> Result<(), String> {
-    Err("the Keychain is only available on macOS".into())
-}
-
-/// Read a secret from where the settings keep it: the macOS Keychain
-/// (default) or a key file.
+/// Read a secret from where the settings keep it: the Windows Credential
+/// Manager (default) or a key file.
 #[tauri::command]
 fn secret_get(
     name: String,
@@ -594,7 +619,7 @@ fn secret_get(
     secret_allowed(&name)?;
     Ok(match storage.as_deref() {
         Some("file") => file_get(&secrets_file(file.as_deref()), &name),
-        _ => keychain_get(&name),
+        _ => credential_get(&name),
     })
 }
 
@@ -613,7 +638,7 @@ fn secret_set(
     }
     match storage.as_deref() {
         Some("file") => file_set(&secrets_file(file.as_deref()), &name, value),
-        _ => keychain_set(&name, value),
+        _ => credential_set(&name, value),
     }
 }
 
@@ -622,9 +647,9 @@ fn secret_set(
 /// Settings live in a file, not in the webview: one place to back up, and
 /// one an administrator can provision.
 ///
-///  - `~/Library/Application Support/Lucida/settings.json` — the user's own;
-///  - `/Library/Application Support/Lucida/defaults.json` — optional, written
-///    by IT (MDM): `{ "defaults": {…}, "locked": ["key", …] }`. Defaults fill
+///  - `%APPDATA%\Lucida\settings.json` — the user's own;
+///  - `%ProgramData%\Lucida\defaults.json` — optional, written by IT (Intune,
+///    Group Policy): `{ "defaults": {…}, "locked": ["key", …] }`. Defaults fill
 ///    what the user has not set; locked keys cannot be changed in the app.
 fn user_settings_file() -> PathBuf {
     support_dir().join("settings.json")
@@ -633,7 +658,13 @@ fn user_settings_file() -> PathBuf {
 fn managed_settings_file() -> PathBuf {
     std::env::var("LUCIDA_MANAGED_SETTINGS")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("/Library/Application Support/Lucida/defaults.json"))
+        .unwrap_or_else(|_| {
+            std::env::var_os("ProgramData")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"))
+                .join("Lucida")
+                .join("defaults.json")
+        })
 }
 
 #[tauri::command]
@@ -726,7 +757,7 @@ pub fn run() {
         port: port(),
         model: model(),
         dir: Mutex::new(dir.clone()),
-        script: "serve.sh",
+        script: "serve.ps1",
         log: "server.log",
         env_port: "LUCIDA_AI_PORT",
         env_model: "LUCIDA_AI_MODEL",
@@ -736,7 +767,7 @@ pub fn run() {
         port: listen_port(),
         model: listen_model(),
         dir: Mutex::new(dir),
-        script: "listen.sh",
+        script: "listen.ps1",
         log: "listen.log",
         env_port: "LUCIDA_LISTEN_PORT",
         env_model: "LUCIDA_LISTEN_MODEL",

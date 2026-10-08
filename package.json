@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "description": "A whiteboard for macOS: write a word and get a picture, one board per folder, a plan wall synced with Markdown files, and an MCP server so agents can draw on it. Tauri + React + Excalidraw.",
+  "description": "A whiteboard for Windows: write a word and get a picture, one board per folder, a plan wall synced with Markdown files, and an MCP server so agents can draw on it. Tauri + React + Excalidraw.",
   "license": "MIT",
   "author": "Julian Lang",
   "repository": {
@@ -18,12 +18,12 @@
     "tauri",
     "react",
     "excalidraw",
-    "mlx",
+    "llama.cpp",
     "whiteboard",
     "local-first",
     "on-device-ai",
     "diagramming",
-    "macos"
+    "windows"
   ],
   "scripts": {
     "dev": "vite",
