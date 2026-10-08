@@ -159,14 +159,19 @@ rebasing a stacked PR (below).
 
 - CI must be green (`gh pr checks <n> --repo hanzala-bhutto/lucida`).
 - Merge with **squash**, keeping the PR title as the commit subject and the PR
-  summary as the body, without attribution trailers, then delete the branch:
+  summary as the body, without attribution trailers:
   ```powershell
-  gh pr merge <n> --repo hanzala-bhutto/lucida --squash --delete-branch `
+  gh pr merge <n> --repo hanzala-bhutto/lucida --squash `
     --subject "<PR title> (#<n>)" --body "<summary>`n`nCloses #<issue>"
   git switch main
   git pull --ff-only origin main
   ```
 - The maintainer decides when to merge; the coding agent merges only when asked.
+- **Never delete remote branches.** Merged branches stay on GitHub: no
+  `--delete-branch`, no `git push --delete`, no `git push origin :<branch>`,
+  no deleting from the GitHub UI. The repository's "Automatically delete head
+  branches" setting stays off, and `.claude/settings.json` blocks the delete
+  commands for the coding agent.
 
 ## 7. Stacked PRs
 

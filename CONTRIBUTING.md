@@ -59,7 +59,8 @@ are in [docs/WORKFLOW.md](./docs/WORKFLOW.md); in short:
    (`fix(board): save before the window closes`).
 4. **Open a PR against `main`** with the template filled in, `Closes #<issue>`,
    and how you tested it. CI must pass.
-5. PRs are **squash-merged** and the branch is deleted.
+5. PRs are **squash-merged**. Branches are **never deleted** from the remote,
+   merged or not.
 
 Keep PRs **small and focused**. Stack a PR on another one only when it truly
 depends on unmerged work; say "Depends on #<n>" in its description.
