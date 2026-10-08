@@ -1,7 +1,7 @@
 ---
 name: Task
-about: Maintenance, tooling, CI or documentation work
-title: "[chore] "
+about: Maintenance, tooling, CI, docs, refactors or tests (see docs/WORKFLOW.md for the label)
+title: ""
 labels: chore
 ---
 

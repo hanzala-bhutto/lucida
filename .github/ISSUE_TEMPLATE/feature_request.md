@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for Lucida
-title: "[feat] "
+title: ""
 labels: enhancement
 ---
 

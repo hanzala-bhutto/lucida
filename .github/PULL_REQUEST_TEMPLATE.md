@@ -1,3 +1,5 @@
+<!-- Title: <type>(<scope>): <summary>, e.g. "fix(board): save pending changes before the window closes". See docs/WORKFLOW.md. -->
+
 ## Summary
 
 <!-- What does this change, and why? One or two sentences a reviewer can read first. -->

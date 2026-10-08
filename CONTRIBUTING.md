@@ -47,8 +47,9 @@ npx tsx scratch/test-ai.ts           # model-output parsing + skeleton building
 
 ## Workflow
 
-Every change goes issue → branch → pull request. The full steps (which the
-coding agent follows too) are in [CLAUDE.md](./CLAUDE.md#workflow); in short:
+Every change goes issue → branch → pull request. The full rules, including
+which label an issue gets and how to name issues, branches, commits and PRs,
+are in [docs/WORKFLOW.md](./docs/WORKFLOW.md); in short:
 
 1. **Open or pick an issue** with a problem statement and acceptance criteria.
 2. **Cut a fresh branch from an up-to-date `main`** for that issue only:
