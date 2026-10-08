@@ -45,10 +45,21 @@ npx tsx scratch/test-ai.ts           # model-output parsing + skeleton building
 - Shared contracts live in `src/lib/types.ts` and `src/lib/config.ts` — treat
   them as the single source of truth and change them deliberately.
 
-## Pull requests
+## Workflow
 
-- Keep `npm run build` (`tsc && vite build`) green.
-- Keep PRs **small and focused** — one change per PR is easier to review.
-- Describe what changed and why; if it touches behavior, note how you tested it.
+Every change goes issue → branch → pull request. The full rules, including
+which label an issue gets and how to name issues, branches, commits and PRs,
+are in [docs/WORKFLOW.md](./docs/WORKFLOW.md); in short:
 
-That's it. Open an issue first if you're planning something larger.
+1. **Open or pick an issue** with a problem statement and acceptance criteria.
+2. **Cut a fresh branch from an up-to-date `main`** for that issue only:
+   `<type>/<issue>-<slug>`, e.g. `fix/14-save-on-close`. Types: `feat`, `fix`,
+   `docs`, `chore`, `ci`, `refactor`, `test`, `perf`.
+3. **Commit with [Conventional Commits](https://www.conventionalcommits.org/)**
+   (`fix(board): save before the window closes`).
+4. **Open a PR against `main`** with the template filled in, `Closes #<issue>`,
+   and how you tested it. CI must pass.
+5. PRs are **squash-merged** and the branch is deleted.
+
+Keep PRs **small and focused**. Stack a PR on another one only when it truly
+depends on unmerged work; say "Depends on #<n>" in its description.
