@@ -3,9 +3,13 @@ Render the Lucida app icon: a premium gradient squircle with a geometric glyph
 that reads as "shapes + clarity" — a clean rounded square interlocking with a
 circle, plus a small AI sparkle. Rendered at 2x and downsampled for crisp edges.
 
-Run: sidecar/.venv/bin/python scratch/make_icon.py
-Outputs /tmp/lucida-icon.png (1024) + small previews.
+Run: python scratch/make_icon.py   (needs Pillow and numpy)
+Outputs lucida-icon.png (1024) + small previews in %TEMP%; regenerate the app
+icons from it with `npm run tauri icon %TEMP%\lucida-icon.png`.
 """
+import tempfile
+from pathlib import Path
+
 import numpy as np
 from PIL import Image, ImageDraw, ImageChops
 
@@ -83,10 +87,11 @@ def render():
     d.polygon(four_point_star(0.80 * S, 0.45 * S, 0.032 * S, 0.008 * S), fill=soft)
 
     out = icon.resize((1024, 1024), Image.LANCZOS)
-    out.save("/tmp/lucida-icon.png")
-    out.resize((128, 128), Image.LANCZOS).save("/tmp/lucida-icon-128.png")
-    out.resize((32, 32), Image.LANCZOS).save("/tmp/lucida-icon-32.png")
-    print("wrote /tmp/lucida-icon.png (+128,32 previews)")
+    tmp = Path(tempfile.gettempdir())
+    out.save(tmp / "lucida-icon.png")
+    out.resize((128, 128), Image.LANCZOS).save(tmp / "lucida-icon-128.png")
+    out.resize((32, 32), Image.LANCZOS).save(tmp / "lucida-icon-32.png")
+    print(f"wrote {tmp / 'lucida-icon.png'} (+128,32 previews)")
 
 
 if __name__ == "__main__":
