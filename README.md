@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lang-Julian/lucida/actions/workflows/ci.yml"><img src="https://github.com/Lang-Julian/lucida/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="https://github.com/Lang-Julian/lucida/releases/latest"><img src="https://img.shields.io/github/v/release/Lang-Julian/lucida" alt="Latest release" /></a>
+  <a href="https://github.com/hanzala-bhutto/lucida/actions/workflows/ci.yml"><img src="https://github.com/hanzala-bhutto/lucida/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/hanzala-bhutto/lucida/releases/latest"><img src="https://img.shields.io/github/v/release/hanzala-bhutto/lucida" alt="Latest release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://tauri.app"><img src="https://img.shields.io/badge/built%20with-Tauri-24C8DB.svg?logo=tauri&logoColor=white" alt="Built with Tauri" /></a>
 </p>
@@ -22,6 +22,10 @@
 - **Agents can draw on it.** An MCP server lets Claude Code (or any MCP client)
   read the board and put proposals on it.
 
+> Lucida for Windows is a fork of [Lucida](https://github.com/Lang-Julian/lucida)
+> by [Julian Lang](https://github.com/Lang-Julian), ported to Windows and
+> maintained here. See [Credits](#credits).
+
 > Named after the *camera lucida*, the optical drawing aid artists used to trace
 > what they saw.
 
@@ -33,7 +37,7 @@
 ## Install
 
 Download the installer (`Lucida_<version>_x64-setup.exe`) from the
-[latest release](https://github.com/Lang-Julian/lucida/releases/latest) and run
+[latest release](https://github.com/hanzala-bhutto/lucida/releases/latest) and run
 it. It installs for the current user, into `%LOCALAPPDATA%\Lucida`, and needs
 no admin rights. The installer is not code-signed yet, so SmartScreen asks
 first: **More info → Run anyway**. An `.msi` for per-machine deployment is
@@ -319,6 +323,17 @@ scratch/                   tests and the fictional fixture
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Security reports go through
 [SECURITY.md](./SECURITY.md).
 
+## Credits
+
+Lucida was created by **Julian Lang** —
+[Lang-Julian/lucida](https://github.com/Lang-Julian/lucida). The whiteboard,
+the pictures, the plan wall, the company map and the MCP server are his work.
+This fork ports it to Windows (paths, Credential Manager, llama.cpp and
+faster-whisper sidecars, installers) and continues it as a Windows-only app.
+
+Built on [Excalidraw](https://github.com/excalidraw/excalidraw) and
+[Tauri](https://tauri.app).
+
 ## License
 
-[MIT](./LICENSE) © 2026 Julian Lang
+[MIT](./LICENSE) © 2026 Julian Lang, © 2026 Hanzala Bhutto

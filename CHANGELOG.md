@@ -6,6 +6,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Forked from [Lang-Julian/lucida](https://github.com/Lang-Julian/lucida) v0.2.0
+as a Windows-only app. Entries below this one are the original project's.
+
 ### Changed
 
 - **Lucida is now a Windows app** (Windows 10/11 x64); macOS is no longer
@@ -123,6 +126,6 @@ Initial public release.
 - GitHub Actions CI (build + sanity tests + Rust fmt/clippy/build), a custom
   icon + favicon, and full documentation.
 
-[Unreleased]: https://github.com/Lang-Julian/lucida/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hanzala-bhutto/lucida/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/Lang-Julian/lucida/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Lang-Julian/lucida/releases/tag/v0.1.0

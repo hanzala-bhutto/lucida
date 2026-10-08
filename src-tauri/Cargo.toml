@@ -3,8 +3,8 @@ name = "lucida"
 version = "0.2.0"
 description = "Lucida — an AI-enhanced smart whiteboard (Tauri shell)."
 license = "MIT"
-repository = "https://github.com/Lang-Julian/lucida"
-authors = ["Julian Lang"]
+repository = "https://github.com/hanzala-bhutto/lucida"
+authors = ["Hanzala Bhutto", "Julian Lang"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -83,7 +83,7 @@ export const PRIVACY_ZDR = { data_collection: "deny", zdr: true } as const;
 export const PRIVACY_NO_TRAINING = { data_collection: "deny" } as const;
 /** Sent as OpenRouter's app attribution headers — off by default, see DEFAULT_TRANSPORT. */
 export const APP_ATTRIBUTION = {
-  referer: "https://github.com/Lang-Julian/lucida",
+  referer: "https://github.com/hanzala-bhutto/lucida",
   title: "Lucida",
 };
 
